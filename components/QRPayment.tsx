@@ -17,7 +17,7 @@ export default function QRPayment({ amount, description, email }: QRPaymentProps
     setError(null);
 
     try {
-      const res = await fetch('/api/charge', {
+      const res = await fetch('/api/promptpay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
