@@ -23,11 +23,16 @@ export default function TransactionList() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchTransactions = () => {
+    setLoading(true);
     fetch('/api/transactions')
       .then((r) => r.json())
       .then((data) => setTransactions(data.transactions ?? []))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchTransactions();
   }, []);
 
   if (loading) return <p className="text-center text-gray-400 py-8">กำลังโหลด...</p>;
@@ -35,7 +40,12 @@ export default function TransactionList() {
 
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4">รายการชำระเงินล่าสุด</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold">รายการชำระเงินล่าสุด</h2>
+        <button onClick={fetchTransactions} className="text-sm text-blue-600 hover:underline">
+          รีเฟรช
+        </button>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm bg-white rounded-xl shadow-md overflow-hidden">
           <thead className="bg-gray-100 text-gray-600">
