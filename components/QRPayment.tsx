@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface QRPaymentProps {
   amount: number;       // บาท
@@ -8,9 +9,28 @@ interface QRPaymentProps {
 }
 
 export default function QRPayment({ amount, description, email }: QRPaymentProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [qrImage, setQrImage] = useState<string | null>(null);
+  const [chargeId, setChargeId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Poll status ทุก 3 วินาที เมื่อมี QR แล้ว
+  useEffect(() => {
+    if (!chargeId) return;
+
+    intervalRef.current = setInterval(async () => {
+      const res = await fetch(`/api/charge-status?chargeId=${chargeId}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (data.status === 'successful') {
+        clearInterval(intervalRef.current!);
+        router.push('/payment/success');
+      }
+    }, 3000);
+
+    return () => clearInterval(intervalRef.current!);
+  }, [chargeId, router]);
 
   const handleGenerateQR = async () => {
     setLoading(true);
@@ -33,6 +53,7 @@ export default function QRPayment({ amount, description, email }: QRPaymentProps
 
       if (data.qrImage) {
         setQrImage(data.qrImage);
+        setChargeId(data.chargeId);
       } else if (data.error) {
         setError(data.error);
       }
@@ -51,7 +72,8 @@ export default function QRPayment({ amount, description, email }: QRPaymentProps
         <div>
           <p className="text-sm text-gray-600 mb-3">สแกน QR ด้วยแอปธนาคาร</p>
           <img src={qrImage} alt="PromptPay QR" className="mx-auto w-48 h-48" />
-          <p className="text-xs text-gray-400 mt-3">QR Code จะหมดอายุใน 15 นาที</p>
+          <p className="text-xs text-gray-400 mt-2">QR Code จะหมดอายุใน 15 นาที</p>
+          <p className="text-xs text-blue-500 mt-1 animate-pulse">รอรับการชำระเงิน...</p>
         </div>
       ) : (
         <button
