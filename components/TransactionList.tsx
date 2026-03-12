@@ -25,7 +25,7 @@ export default function TransactionList() {
 
   const fetchTransactions = () => {
     setLoading(true);
-    fetch('/api/transactions')
+    fetch('/api/transactions', { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => setTransactions(data.transactions ?? []))
       .finally(() => setLoading(false));
